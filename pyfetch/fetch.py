@@ -1,18 +1,23 @@
+from typing import Optional
 import json
+import sys 
 
-import requests
 from requests import Response
 from requests.api import request
-import sys
 
 from pyfetch.reader import read_request_file
+from pyfetch.writer import write
 
 class Fetcher:
     def __init__(self) -> None:
-        pass
+        sys.stdout.reconfigure(encoding='utf-8')
 
-    def fetch(file_path:str = 'data.yaml'):
-        data:dict = read_request_file(file_path)
-        res:Response = request(**data)
-        print(res)
+    def fetch(request_file_path:str ,output_file_path:Optional[str] = None):
+        out = output_file_path or sys.stdout
+        data:dict = read_request_file(request_file_path)
+        response:Response = request(**data)
 
+        response_metadata = json.dumps(dict(**response.headers,
+                                            **{"status":response.status_code,"url":response.url}))
+        write(response_metadata + '\n' + response.content.decode('utf-8'),
+              out)
